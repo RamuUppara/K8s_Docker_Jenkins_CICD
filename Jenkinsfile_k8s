@@ -1,0 +1,37 @@
+node{
+    //def buildNumber = BUILD_NUMBER  
+    stage('SCM Checkout'){
+        git url: 'https://github.com/DeepakshiPurushotham/Task_2.git',branch: 'main'
+    }
+    
+    stage(" Maven Clean Package"){
+      def mavenHome =  tool name: "maven_3.8.6", type: "maven"
+      def mavenCMD = "${mavenHome}/bin/mvn"
+      sh "${mavenCMD} clean package"
+      
+    } 
+    
+    
+    stage('Build Docker Image'){
+        sh "docker build -t deepakshipurushotham/web-app ."
+    }
+    
+    stage('Push Docker Image'){
+       withCredentials([string(credentialsId: 'Docker_pwd', variable: 'Docker_pwd')]) {
+    // some block
+       sh "docker login -u deepakshipurushotham -p ${Docker_pwd}"
+     }
+        sh "docker push deepakshipurushotham/web-app"
+     }
+    //withcrednetials 
+     stage ('K8s_Deployment') {
+         withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'K8s', namespace: '', serverUrl: 'https://DE4FF3278B7D96BE605A9FF5B1DC97AD.gr7.us-east-1.eks.amazonaws.com') {
+    // some block
+
+    sh "/usr/local/bin/kubectl apply -f *.yaml"
+}
+    
+
+     }
+     
+}
